@@ -7,6 +7,19 @@ pieceScore = {"K": 0, "Q": 10, "R": 5, "B": 5, "N": 3, "P": 1}
 CHECKMATE = 1000
 STALEMATE = 0
 DEPTH = 4
+transpositionTable = {}
+
+def orderMoves(gs,validMoves):
+    def move_value(move):
+        if move.pieceCaptured != "--":   #en passant covered as it changes the move.pieceCaptured
+            return 10 * pieceScore[move.pieceCaptured[1]] - pieceScore[move.pieceMoved[1]]
+        elif move.isPawnPromotion:
+            return 9
+        elif gs.givesCheck(move):  #TODO: implement the function gives check
+            return 8
+        return 0
+
+    return sorted(validMoves, key=move_value, reverse=True)
 
 
 
@@ -130,12 +143,14 @@ def negaMax(gs,validMoves,depth,whiteToMove):
 
 def alphaBetaPruning(gs,validMoves,depth,whiteToMove,alpha,beta):
     global nextMove,counter
+
     if depth == 0:
         counter+=1
         return scoreBoard(gs) if whiteToMove else -scoreBoard(gs)
 
     maxScore = -CHECKMATE
     # random.shuffle(validMoves)
+    orderMoves(gs,validMoves)
     for move in validMoves:
         gs.makeMove(move)
         score = -1*alphaBetaPruning(gs, gs.getAllValidMoves(), depth - 1, not whiteToMove,-1*beta,-1*alpha)
@@ -186,3 +201,5 @@ def findScore(board):
                 mult = 1 if board[r][c][0] == 'w' else -1
                 score = score + mult * pieceScore[board[r][c][1]]
     return score
+
+

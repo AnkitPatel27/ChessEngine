@@ -263,6 +263,11 @@ class GameState:
                     break
 
         return False
+
+    #check if the last piece moved gives check
+    def givesCheck(self,move):
+        return False
+
     # all moves possible
     def getAllPossibleMoves(self):
         moves = []
