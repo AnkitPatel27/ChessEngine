@@ -10,7 +10,9 @@ import pygame_menu
 
 # BOARD DIMENSIONS
 DIMENSION = 8
+TEXTWIDTH = 180
 BOARDWIDTH = HEIGHT = 512
+WIDTH = TEXTWIDTH+BOARDWIDTH
 SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
@@ -29,8 +31,8 @@ def loadImages():
 def show_menu(screen):
     global player1, player2
 
-    menu = pygame_menu.Menu('Chess Game', BOARDWIDTH, HEIGHT,
-                            theme=pygame_menu.themes.THEME_BLUE)
+    menu = pygame_menu.Menu('Chess Game', WIDTH, HEIGHT,
+                            theme=pygame_menu.themes.THEME_DARK)
 
     menu.add.selector('White Player :', [('Human', True), ('AI', False)], onchange=set_player1)
     menu.add.selector('Black Player :', [('Human', True), ('AI', False)], onchange=set_player2)
@@ -44,12 +46,12 @@ def set_player2(_, value):
     player2 = value
 
 def main():
-    global BOARDWIDTH, HEIGHT, SQ_SIZE,DIMENSION
+    global BOARDWIDTH, HEIGHT, SQ_SIZE,DIMENSION,WIDTH
     # pygame setup
     p.init()
     loadImages()
     gs = ChessEngine.GameState()
-    screen = p.display.set_mode((BOARDWIDTH,HEIGHT),p.RESIZABLE)
+    screen = p.display.set_mode((WIDTH,HEIGHT),p.RESIZABLE)
     clock = p.time.Clock()
     running = True
 
@@ -74,10 +76,10 @@ def main():
                 running = False
             elif event.type == p.VIDEORESIZE:
                 # Window has been resized
-                BOARDWIDTH = HEIGHT = min(event.w, event.h)
+                BOARDWIDTH = HEIGHT = min(event.w-TEXTWIDTH, event.h)
                 BOARDWIDTH = HEIGHT = (BOARDWIDTH // 8) * 8  # Ensure it's divisible by 8
                 SQ_SIZE = HEIGHT // DIMENSION
-                screen = p.display.set_mode((BOARDWIDTH, HEIGHT), p.RESIZABLE)
+                screen = p.display.set_mode((BOARDWIDTH+TEXTWIDTH, HEIGHT), p.RESIZABLE)
                 loadImages()
             elif not gameOver and humanTurn and event.type == p.MOUSEBUTTONUP:
                 pos = p.mouse.get_pos()
@@ -169,15 +171,37 @@ def main():
     p.quit()
 
 def drawText(screen,message):
-    font = p.font.SysFont("Helvitca",32,True,False)
+    font = p.font.SysFont("Arial",32,True,False)
     textObj = font.render(message,0,p.Color('black'))
-    textLoc = p.Rect(0,0,BOARDWIDTH,HEIGHT).move(BOARDWIDTH/2-textObj.get_BOARDWIDTH()/2,HEIGHT/2-textObj.get_height()/2)
+    textLoc = p.Rect(0,0,BOARDWIDTH,HEIGHT).move(BOARDWIDTH/2-textObj.get_width()/2,HEIGHT/2-textObj.get_height()/2)
     screen.blit(textObj,textLoc)
+
+def drawSideText(moveLog,screen):
+    p.draw.rect(screen, p.Color((0,0,0)), p.Rect(BOARDWIDTH, 0,TEXTWIDTH, HEIGHT))
+    font = p.font.SysFont("Arial", 12, True, False)
+    message = "\nUNDO : press(z) \n\n PawnPromo: press(Q,N,B,R)\n (Q): Queen \n (N): Knight \n (B): Bishop \n (R): Rook \n\n\n"
+    logMessage = "Last Ten Moves : \n"
+    if len(moveLog)==0:
+      logMessage += "No Moves Made!!\n"
+    else:
+        for i in range(len(moveLog) - 1, max(-1,len(moveLog)-10), -1):
+            logMessage+=str(i+1)+"] "+moveLog[i].getChessNotation()+"\n"
+    text_surf = font.render(
+        message+logMessage,
+        True,
+        "white",
+        wraplength=140,
+    )
+
+
+    screen.blit(text_surf, (BOARDWIDTH+10,0))
+
 
 def drawState(gs,screen,last2Moves,ValidMoves):
     drawBoard(screen,last2Moves)
     highlightSquare(gs,screen,last2Moves,ValidMoves)
     drawPieces(screen,gs.board)
+    drawSideText(gs.moveLog,screen)
 
 
 def highlightSquare(gs,screen,last2Moves,ValidMoves):

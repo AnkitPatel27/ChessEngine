@@ -62,7 +62,7 @@ class GameState:
 
         # pawn promotion
         if move.isPawnPromotion:
-            self.board[move.endR][move.endC] = move.pieceMoved[0]+'Q'
+            self.board[move.endR][move.endC] = move.pieceMoved[0]+input("Enter the Piece to Promote with")
 
 
         #enPassant Sqaure
